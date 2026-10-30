@@ -161,22 +161,19 @@
   animation: px-bob 1.7s ease-in-out infinite;
 }
 
-@keyframes px-lunge {
-  0% { transform: translateX(0); }
-  35% { transform: translateX(28px) translateY(-6px); }
-  100% { transform: translateX(0); }
+@keyframes px-cheer {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-18px) rotate(-3deg); }
+  60% { transform: translateY(0) rotate(2deg); }
 }
-.px-lunge {
-  animation: px-lunge 0.45s ease-out;
+.px-win {
+  animation: px-cheer 0.7s ease-in-out infinite;
 }
 
-@keyframes px-lunge-back {
-  0% { transform: translateX(0); }
-  35% { transform: translateX(-28px) translateY(-6px); }
-  100% { transform: translateX(0); }
-}
-.px-lunge-back {
-  animation: px-lunge-back 0.45s ease-out;
+.px-sad {
+  filter: grayscale(0.8) brightness(0.6);
+  transform: translateY(8px) rotate(-4deg);
+  transition: filter 0.6s, transform 0.6s;
 }
 
 .px-dead {
@@ -205,8 +202,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .px-bob,
-  .px-lunge,
-  .px-lunge-back {
+  .px-win {
     animation: none;
   }
 }
