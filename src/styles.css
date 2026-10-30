@@ -162,12 +162,13 @@
 }
 
 @keyframes px-cheer {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  30% { transform: translateY(-18px) rotate(-3deg); }
-  60% { transform: translateY(0) rotate(2deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  25% { transform: translateY(-30px) rotate(-5deg) scale(1.06); }
+  50% { transform: translateY(0) rotate(3deg) scale(0.98); }
+  75% { transform: translateY(-16px) rotate(-2deg) scale(1.03); }
 }
 .px-win {
-  animation: px-cheer 0.7s ease-in-out infinite;
+  animation: px-cheer 0.85s ease-in-out infinite;
 }
 
 .px-sad {

@@ -301,6 +301,7 @@ function Sprite({ u, index, active, sprites, result }: {
       <div
         ref={(el) => { sprites.current[u.uid] = el; }}
         className={`flex flex-col items-center ${dead ? "px-dead" : ""} ${mood}`}
+        style={mood ? { animationDelay: `${index * 0.13}s` } : undefined}
       >
         <div className={`h-4 text-xs leading-none text-primary ${active && !dead ? "px-bob" : "opacity-0"}`} aria-hidden>▲</div>
         <img
