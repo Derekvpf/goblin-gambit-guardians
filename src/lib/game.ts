@@ -1,3 +1,11 @@
+import knight from "@/assets/knight.png";
+import mage from "@/assets/mage.png";
+import archer from "@/assets/archer.png";
+import lancer from "@/assets/lancer.png";
+import warrior from "@/assets/warrior.png";
+import shaman from "@/assets/shaman.png";
+import boss from "@/assets/boss.png";
+export const IMG: Record<string, string> = { knight, mage, archer, lancer, warrior, shaman, boss };
 export type Side = "hero" | "enemy";
 export type Skill = {
   name: string;
