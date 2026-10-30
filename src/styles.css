@@ -147,3 +147,66 @@
     font-family: var(--font-sans);
   }
 }
+
+/* ---------- Pixel-art battle sprites ---------- */
+.pixel {
+  image-rendering: pixelated;
+}
+
+@keyframes px-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.px-bob {
+  animation: px-bob 1.7s ease-in-out infinite;
+}
+
+@keyframes px-lunge {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(28px) translateY(-6px); }
+  100% { transform: translateX(0); }
+}
+.px-lunge {
+  animation: px-lunge 0.45s ease-out;
+}
+
+@keyframes px-lunge-back {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(-28px) translateY(-6px); }
+  100% { transform: translateX(0); }
+}
+.px-lunge-back {
+  animation: px-lunge-back 0.45s ease-out;
+}
+
+.px-dead {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.4;
+  transform: translateY(10px) rotate(-7deg);
+  transition: filter 0.5s, opacity 0.5s, transform 0.5s;
+}
+
+.arena-floor {
+  background-color: color-mix(in oklab, var(--muted) 70%, var(--background));
+  background-image: repeating-linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--background) 45%, var(--muted)) 0 14px,
+    transparent 14px 28px
+  );
+  border-top: 3px solid color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+
+.arena-sky {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-bob,
+  .px-lunge,
+  .px-lunge-back {
+    animation: none;
+  }
+}

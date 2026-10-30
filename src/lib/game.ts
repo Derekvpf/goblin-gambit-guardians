@@ -5,7 +5,18 @@ import lancer from "@/assets/lancer.png";
 import warrior from "@/assets/warrior.png";
 import shaman from "@/assets/shaman.png";
 import boss from "@/assets/boss.png";
+import pxKnight from "@/assets/px-knight.png";
+import pxMage from "@/assets/px-mage.png";
+import pxArcher from "@/assets/px-archer.png";
+import pxLancer from "@/assets/px-lancer.png";
+import pxWarrior from "@/assets/px-warrior.png";
+import pxShaman from "@/assets/px-shaman.png";
+import pxBoss from "@/assets/px-boss.png";
 export const IMG: Record<string, string> = { knight, mage, archer, lancer, warrior, shaman, boss };
+export const PIX: Record<string, string> = {
+  knight: pxKnight, mage: pxMage, archer: pxArcher,
+  lancer: pxLancer, warrior: pxWarrior, shaman: pxShaman, boss: pxBoss,
+};
 export type Side = "hero" | "enemy";
 export type Skill = {
   name: string;
