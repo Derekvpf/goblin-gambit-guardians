@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Goblin Siege — RPG de Turnos" },
-      { name: "description", content: "Cavaleiro, Mago e Arqueira contra hordas goblin e o Hobgoblin em batalhas automáticas por turno." },
+      { name: "description", content: "Cavaleiro, Mago e Arqueira contra hordas goblin e o boss Hobgoblin em batalhas automáticas por turno." },
       { property: "og:title", content: "Goblin Siege — RPG de Turnos" },
       { property: "og:description", content: "Batalhas automáticas por turno contra goblins e o boss Hobgoblin." },
       { property: "og:type", content: "website" },
@@ -16,8 +16,109 @@ export const Route = createFileRoute("/")({
   component: Game,
 });
 
-type SpriteRef = React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+/* ---------------- animation helpers ---------------- */
+type KF = Record<string, string | number>[];
+type Refs = React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 
+const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const token = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+function run(el: HTMLElement | null | undefined, kf: KF, duration: number, iterations = 1) {
+  if (!el || reduced()) return;
+  el.animate(kf as Keyframe[], { duration, easing: "ease-out", iterations });
+}
+
+/** Floating combat text over a sprite (-24, +45, 🛡40). */
+function popup(host: HTMLElement | null, target: HTMLElement | null, text: string, color: string) {
+  if (!host || !target || reduced()) return;
+  const h = host.getBoundingClientRect();
+  const r = target.getBoundingClientRect();
+  const s = document.createElement("span");
+  s.textContent = text;
+  s.style.cssText =
+    "position:absolute;z-index:10;pointer-events:none;white-space:nowrap;" +
+    `left:${r.left - h.left + r.width / 2}px;top:${r.top - h.top}px;` +
+    `color:${color};font:700 15px/1 var(--font-display), Georgia, serif;` +
+    "text-shadow:0 2px 0 var(--background);";
+  host.appendChild(s);
+  s.animate(
+    [
+      { transform: "translate(-50%,0) scale(.7)", opacity: 0 },
+      { transform: "translate(-50%,-18px) scale(1.2)", opacity: 1, offset: 0.25 },
+      { transform: "translate(-50%,-48px) scale(1)", opacity: 0 },
+    ],
+    { duration: 900, easing: "ease-out" },
+  ).onfinish = () => s.remove();
+}
+
+/** What the acting hero/enemy does: lunge, supreme slam, brace or heal-cast. */
+function playActor(el: HTMLDivElement | null, dir: number, kind: string, ult: boolean, gold: string, green: string) {
+  if (!el) return;
+  if (ult) {
+    run(el, [
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+      { transform: "translate(0,-26px) scale(1.08)", filter: `brightness(2) drop-shadow(0 0 14px ${gold})`, offset: 0.4 },
+      { transform: `translate(${20 * dir}px,8px) scale(1.14) rotate(${5 * dir}deg)`, filter: `brightness(3) drop-shadow(0 0 26px ${gold})`, offset: 0.62 },
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+    ], 700);
+    return;
+  }
+  if (kind === "shield") {
+    run(el, [
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+      { transform: "translate(0,6px) scale(1.14,0.86)", filter: `brightness(1.5) drop-shadow(0 0 16px ${gold})`, offset: 0.45 },
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+    ], 560);
+  } else if (kind === "heal") {
+    run(el, [
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+      { transform: "translate(0,-16px) scale(1.06)", filter: `brightness(1.6) drop-shadow(0 0 16px ${green})`, offset: 0.5 },
+      { transform: "translate(0,0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+    ], 620);
+  } else {
+    run(el, [
+      { transform: "translate(0,0) rotate(0deg)" },
+      { transform: `translate(${-12 * dir}px,-3px) rotate(${-5 * dir}deg)`, offset: 0.3 },
+      { transform: `translate(${38 * dir}px,-8px) rotate(${8 * dir}deg)`, offset: 0.55 },
+      { transform: `translate(${12 * dir}px,0) rotate(0deg)` },
+      { transform: "translate(0,0) rotate(0deg)" },
+    ], 430);
+  }
+}
+
+const playHurt = (el: HTMLDivElement | null) =>
+  run(el, [
+    { transform: "translateX(0)", filter: "brightness(2.8) saturate(.2)" },
+    { transform: "translateX(-8px)", filter: "brightness(1.9) saturate(.6)" },
+    { transform: "translateX(7px)", filter: "brightness(1.4) saturate(.85)" },
+    { transform: "translateX(-4px)", filter: "brightness(1.1) saturate(1)" },
+    { transform: "translateX(0)", filter: "brightness(1) saturate(1)" },
+  ], 360);
+
+const playGuard = (el: HTMLDivElement | null, gold: string) =>
+  run(el, [
+    { transform: "translateY(0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+    { transform: "translateY(-6px) scale(1.06)", filter: `brightness(1.45) drop-shadow(0 0 14px ${gold})`, offset: 0.4 },
+    { transform: "translateY(0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+  ], 620);
+
+const playHealed = (el: HTMLDivElement | null, green: string) =>
+  run(el, [
+    { transform: "translateY(0)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+    { transform: "translateY(-12px)", filter: `brightness(1.7) drop-shadow(0 0 16px ${green})`, offset: 0.45 },
+    { transform: "translateY(0)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
+  ], 640);
+
+const shakeArena = (el: HTMLElement | null) =>
+  run(el, [
+    { transform: "translate(0,0)" },
+    { transform: "translate(-7px,4px)" },
+    { transform: "translate(6px,-5px)" },
+    { transform: "translate(-4px,2px)" },
+    { transform: "translate(0,0)" },
+  ], 400);
+
+/* ---------------- screens ---------------- */
 function Game() {
   const [stage, setStage] = useState<number | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -25,18 +126,17 @@ function Game() {
   const [result, setResult] = useState<"win" | "lose" | null>(null);
   const [speed, setSpeed] = useState(700);
   const [active, setActive] = useState<string | null>(null);
-  const [hurt, setHurt] = useState<string[]>([]);
   const order = useRef<Unit[]>([]);
   const pos = useRef(0);
   const sprites = useRef<Record<string, HTMLDivElement | null>>({});
+  const arena = useRef<HTMLDivElement | null>(null);
 
   const start = (i: number) => {
     const mult = 1 + i * 0.15;
     const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", mult))];
     order.current = [...u].sort((a, b) => b.spd - a.spd);
     pos.current = 0;
-    setUnits(u); setLog([`⚔️ ${STAGES[i]!.name} começou!`]); setResult(null); setStage(i);
-    setActive(null); setHurt([]);
+    setUnits(u); setLog([`⚔️ ${STAGES[i]!.name} começou!`]); setResult(null); setStage(i); setActive(null);
   };
 
   useEffect(() => {
@@ -46,36 +146,36 @@ function Game() {
       let actor = order.current[pos.current % order.current.length]!;
       while (actor.hp <= 0) { pos.current++; actor = order.current[pos.current % order.current.length]!; }
       pos.current++;
-      const before = new Map(alive.map((u) => [u.uid, u.hp]));
+      const snap = new Map(alive.map((u) => [u.uid, { hp: u.hp, shield: u.shield }]));
       setActive(actor.uid);
-      const msg = act(actor, alive);
+      const res = act(actor, alive);
+      const dir = actor.side === "hero" ? 1 : -1;
+      const gold = token("--primary"); const green = token("--hp-hero"); const red = token("--destructive");
+      const actorEl = sprites.current[actor.uid];
+      playActor(actorEl, dir, res.skill.kind, !!res.skill.ultimate, gold, green);
+      if (res.skill.ultimate) {
+        shakeArena(arena.current);
+        run(actorEl, [{ transform: "scale(1)" }, { transform: "scale(1.25)" }, { transform: "scale(1)" }], 260);
+      }
+      res.targets.forEach((t) => {
+        const b = snap.get(t.uid);
+        if (!b) return;
+        const el = sprites.current[t.uid];
+        const lost = b.hp - t.hp + (b.shield - t.shield);
+        const gained = t.hp - b.hp;
+        const guarded = t.shield - b.shield;
+        if (lost > 0) { playHurt(el); popup(arena.current, el, `-${lost}`, red); }
+        else if (gained > 0) { playHealed(el, green); popup(arena.current, el, `+${gained}`, green); }
+        else if (guarded > 0) { playGuard(el, gold); popup(arena.current, el, `🛡${guarded}`, gold); }
+      });
       const heroes = alive.filter((u) => u.side === "hero" && u.hp > 0).length;
       const foes = alive.filter((u) => u.side === "enemy" && u.hp > 0).length;
-      setHurt(alive.filter((u) => (before.get(u.uid) ?? u.hp) > u.hp).map((u) => u.uid));
-      setLog((l) => [msg, ...l].slice(0, 40));
+      if (res.msg) setLog((l) => [res.msg, ...l].slice(0, 40));
       setUnits((u) => [...u]);
       if (!foes) setResult("win"); else if (!heroes) setResult("lose");
     }, speed);
     return () => clearTimeout(t);
   }, [units, stage, result, speed]);
-
-  // Hit reaction: shake + white flash on every unit that just lost HP.
-  useEffect(() => {
-    hurt.forEach((uid) => {
-      const el = sprites.current[uid];
-      if (!el) return;
-      el.animate(
-        [
-          { transform: "translateX(0)", filter: "brightness(2.6) saturate(0.3)" },
-          { transform: "translateX(-7px)", filter: "brightness(1.6) saturate(0.7)" },
-          { transform: "translateX(6px)", filter: "brightness(1.2)" },
-          { transform: "translateX(-3px)", filter: "brightness(1) saturate(1)" },
-          { transform: "translateX(0)", filter: "brightness(1) saturate(1)" },
-        ],
-        { duration: 320, easing: "ease-out" },
-      );
-    });
-  }, [hurt]);
 
   if (stage === null) {
     return (
@@ -124,7 +224,7 @@ function Game() {
       </div>
 
       <div className="max-w-6xl mx-auto mb-6">
-        <Arena units={units} active={active} hurt={hurt} sprites={sprites} />
+        <Arena units={units} active={active} sprites={sprites} arena={arena} result={result} />
       </div>
 
       <div className="grid md:grid-cols-[1fr_1fr] gap-6 max-w-6xl mx-auto">
@@ -139,7 +239,7 @@ function Game() {
         {log.map((l, i) => <div key={i} className={i === 0 ? "text-foreground" : "text-muted-foreground"}>{l}</div>)}
       </div>
       {result && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur flex items-center justify-content-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur flex items-center justify-center p-4">
           <div className="bg-card border-2 border-primary rounded-2xl p-8 text-center max-w-sm w-full">
             <div className="font-display text-4xl mb-4">{result === "win" ? "🏆 Vitória!" : "💀 Derrota"}</div>
             <div className="flex flex-col gap-2">
@@ -156,26 +256,28 @@ function Game() {
   );
 }
 
-function Arena({ units, active, hurt, sprites }: {
-  units: Unit[]; active: string | null; hurt: string[]; sprites: SpriteRef;
+/* ---------------- battle arena ---------------- */
+function Arena({ units, active, sprites, arena, result }: {
+  units: Unit[]; active: string | null; sprites: Refs;
+  arena: React.MutableRefObject<HTMLDivElement | null>; result: "win" | "lose" | null;
 }) {
   const rows: Record<"hero" | "enemy", Unit[]> = {
     hero: units.filter((u) => u.side === "hero"),
     enemy: units.filter((u) => u.side === "enemy"),
   };
   return (
-    <div className="relative overflow-hidden rounded-xl border-2 border-border bg-secondary">
+    <div ref={arena} className="relative overflow-hidden rounded-xl border-2 border-border bg-secondary">
       <div className="arena-sky absolute inset-0" aria-hidden />
       <div className="arena-floor absolute inset-x-0 bottom-0 h-24" aria-hidden />
       <div className="relative flex min-h-[260px] items-end justify-between gap-1 px-2 pb-14 pt-10 sm:gap-3 sm:px-6">
         <div className="flex items-end gap-0.5 sm:gap-3">
           {rows.hero.map((u, i) => (
-            <Sprite key={u.uid} u={u} i={i} index={i} active={active === u.uid} hurt={hurt.includes(u.uid)} sprites={sprites} />
+            <Sprite key={u.uid} u={u} index={i} active={active === u.uid} sprites={sprites} result={result} />
           ))}
         </div>
         <div className="flex items-end gap-0.5 sm:gap-3">
           {rows.enemy.map((u, i) => (
-            <Sprite key={u.uid} u={u} i={i} index={i} active={active === u.uid} hurt={hurt.includes(u.uid)} sprites={sprites} />
+            <Sprite key={u.uid} u={u} index={i} active={active === u.uid} sprites={sprites} result={result} />
           ))}
         </div>
       </div>
@@ -183,19 +285,22 @@ function Arena({ units, active, hurt, sprites }: {
   );
 }
 
-function Sprite({ u, index, active, hurt, sprites }: {
-  u: Unit; i: number; index: number; active: boolean; hurt: boolean; sprites: SpriteRef;
+function Sprite({ u, index, active, sprites, result }: {
+  u: Unit; index: number; active: boolean; sprites: Refs; result: "win" | "lose" | null;
 }) {
   const dead = u.hp <= 0;
   const boss = u.id === "boss";
   const pct = Math.max(0, (u.hp / u.maxHp) * 100);
+  const mood = result === "win"
+    ? (u.side === "hero" && !dead ? "px-win" : "")
+    : result === "lose"
+      ? (u.side === "enemy" && !dead ? "px-win" : "px-sad")
+      : "";
   return (
     <div className="flex w-14 flex-col items-center gap-1 sm:w-20 md:w-24">
       <div
         ref={(el) => { sprites.current[u.uid] = el; }}
-        className={`flex flex-col items-center ${dead ? "px-dead" : ""} ${
-          active && !dead ? (u.side === "hero" ? "px-lunge" : "px-lunge-back") : ""
-        }`}
+        className={`flex flex-col items-center ${dead ? "px-dead" : ""} ${mood}`}
       >
         <div className={`h-4 text-xs leading-none text-primary ${active && !dead ? "px-bob" : "opacity-0"}`} aria-hidden>▲</div>
         <img
@@ -205,9 +310,7 @@ function Sprite({ u, index, active, hurt, sprites }: {
           width={boss ? 178 : 125}
           height={boss ? 160 : 140}
           style={{ animationDelay: `${index * 0.22}s` }}
-          className={`pixel px-bob h-auto w-auto ${
-            boss ? "max-h-28 sm:max-h-36 md:max-h-44" : "max-h-16 sm:max-h-24 md:max-h-28"
-          }`}
+          className={`pixel px-bob h-auto w-auto ${boss ? "max-h-28 sm:max-h-36 md:max-h-44" : "max-h-16 sm:max-h-24 md:max-h-28"}`}
         />
       </div>
       <div className="w-full">
@@ -219,7 +322,6 @@ function Sprite({ u, index, active, hurt, sprites }: {
         </div>
         <div className="mt-0.5 truncate text-center text-[10px] leading-tight text-muted-foreground">{u.name}</div>
       </div>
-      {hurt && !dead && <span className="sr-only">{u.name} levou dano</span>}
     </div>
   );
 }
