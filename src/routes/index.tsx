@@ -133,7 +133,7 @@ function Game() {
 
   const start = (i: number) => {
     const mult = 1 + i * 0.15;
-    const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", mult))];
+    const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", e.id === "boss" ? 1 : mult))];
     order.current = [...u].sort((a, b) => b.spd - a.spd);
     pos.current = 0;
     setUnits(u); setLog([`⚔️ ${STAGES[i]!.name} começou!`]); setResult(null); setStage(i); setActive(null);
