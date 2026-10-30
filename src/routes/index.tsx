@@ -239,8 +239,8 @@ function Game() {
         {log.map((l, i) => <div key={i} className={i === 0 ? "text-foreground" : "text-muted-foreground"}>{l}</div>)}
       </div>
       {result && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur flex items-center justify-center p-4">
-          <div className="bg-card border-2 border-primary rounded-2xl p-8 text-center max-w-sm w-full">
+        <div className="fixed inset-x-0 bottom-0 flex justify-center p-4 pointer-events-none">
+          <div className="pointer-events-auto bg-card border-2 border-primary rounded-2xl p-6 text-center max-w-sm w-full shadow-2xl">
             <div className="font-display text-4xl mb-4">{result === "win" ? "🏆 Vitória!" : "💀 Derrota"}</div>
             <div className="flex flex-col gap-2">
               {result === "win" && stage < 3 && (
@@ -297,7 +297,7 @@ function Sprite({ u, index, active, sprites, result }: {
       ? (u.side === "enemy" && !dead ? "px-win" : "px-sad")
       : "";
   return (
-    <div className="flex w-14 flex-col items-center gap-1 sm:w-20 md:w-24">
+    <div className="flex w-16 flex-col items-center gap-1 sm:w-24 md:w-28">
       <div
         ref={(el) => { sprites.current[u.uid] = el; }}
         className={`flex flex-col items-center ${dead ? "px-dead" : ""} ${mood}`}
@@ -310,7 +310,7 @@ function Sprite({ u, index, active, sprites, result }: {
           width={boss ? 178 : 125}
           height={boss ? 160 : 140}
           style={{ animationDelay: `${index * 0.22}s` }}
-          className={`pixel px-bob h-auto w-auto ${boss ? "max-h-28 sm:max-h-36 md:max-h-44" : "max-h-16 sm:max-h-24 md:max-h-28"}`}
+          className={`pixel px-bob h-auto w-auto ${boss ? "max-h-32 sm:max-h-40 md:max-h-48" : "max-h-20 sm:max-h-28 md:max-h-32"}`}
         />
       </div>
       <div className="w-full">
