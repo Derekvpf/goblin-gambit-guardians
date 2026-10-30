@@ -62,7 +62,7 @@ const G = {
     { name: "Cura Tribal", cooldown: 3, kind: "heal", power: 30 },
     { name: "Explosão Tóxica", cooldown: 5, kind: "aoe", power: 1.2, ultimate: true },
   ]},
-  boss: { id: "boss", name: "HOBGOBLIN", emoji: "👹", hp: 620, atk: 28, def: 6, spd: 9, skills: [
+  boss: { id: "boss", name: "HOBGOBLIN", emoji: "👹", hp: 700, atk: 28, def: 6, spd: 9, skills: [
     { name: "Clava Esmagadora", cooldown: 0, kind: "damage", power: 1.3 },
     { name: "Rugido de Guerra", cooldown: 3, kind: "shield", power: 25 },
     { name: "Terremoto", cooldown: 4, kind: "aoe", power: 1.4, ultimate: true },
