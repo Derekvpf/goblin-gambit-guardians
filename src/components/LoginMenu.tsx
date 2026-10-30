@@ -25,20 +25,25 @@ export function LoginGate({ children }: { children: (info: { nickname: string; s
 
   useEffect(() => {
     setServer(localStorage.getItem("gs-server") ?? "br");
+    if (sessionStorage.getItem("gs-entered")) setEntered(true);
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
     return () => data.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!session) { setEntered(false); return; }
+    if (!session) { if (ready) setEntered(false); return; }
     supabase.from("profiles").select("nickname").eq("id", session.user.id).maybeSingle()
       .then(({ data }) => setNickname(data?.nickname ?? "Aventureiro"));
-  }, [session]);
+  }, [session, ready]);
 
   const logout = async () => { await supabase.auth.signOut(); setEntered(false); };
 
   if (!ready) return <main className="min-h-screen bg-background" />;
+  useEffect(() => {
+    if (entered) sessionStorage.setItem("gs-entered", "1"); else sessionStorage.removeItem("gs-entered");
+  }, [entered]);
+
   if (session && entered) {
     return <>{children({ nickname, server: SERVERS.find((s) => s.id === server)!.name, logout })}</>;
   }
