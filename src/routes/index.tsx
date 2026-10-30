@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { IMG, PIX, HEROES, STAGES, act, spawn, type Unit } from "@/lib/game";
+import { IMG, PIX, HEROES, GACHA_HEROES, ALL_HEROES, STAGES, act, spawn, type Unit } from "@/lib/game";
+import { getOwnedHeroes } from "@/lib/gacha.functions";
 import { LoginGate } from "@/components/LoginMenu";
 
 export const Route = createFileRoute("/")({
@@ -134,9 +136,24 @@ function Game({ nickname, server, logout }: { nickname: string; server: string; 
   const sprites = useRef<Record<string, HTMLDivElement | null>>({});
   const arena = useRef<HTMLDivElement | null>(null);
 
+  const fetchOwned = useServerFn(getOwnedHeroes);
+  const [available, setAvailable] = useState<string[]>(HEROES.map((h) => h.id));
+  const [party, setParty] = useState<string[]>(HEROES.map((h) => h.id));
+  useEffect(() => {
+    fetchOwned().then((owned) => setAvailable([...HEROES.map((h) => h.id), ...owned])).catch(() => {});
+    const saved = localStorage.getItem("gs-party");
+    if (saved) try { const p = JSON.parse(saved) as string[]; if (p.length) setParty(p); } catch { /* ignore */ }
+  }, [fetchOwned]);
+  const togglePartyMember = (id: string) => setParty((p) => {
+    const next = p.includes(id) ? p.filter((x) => x !== id) : p.length >= 3 ? p : [...p, id];
+    localStorage.setItem("gs-party", JSON.stringify(next));
+    return next;
+  });
+
   const start = (i: number) => {
     const mult = 1 + i * 0.15;
-    const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", e.id === "boss" ? 1 : mult))];
+    const team = ALL_HEROES.filter((h) => party.includes(h.id) && available.includes(h.id));
+    const u = [...team.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", e.id === "boss" ? 1 : mult))];
     order.current = [...u].sort((a, b) => b.spd - a.spd);
     pos.current = 0;
     setUnits(u); setLog([`⚔️ ${STAGES[i]!.name} começou!`]); setResult(null); setStage(i); setActive(null);
@@ -188,29 +205,46 @@ function Game({ nickname, server, logout }: { nickname: string; server: string; 
           <button onClick={logout} className="px-3 py-1 rounded-md border bg-card">Sair</button>
         </div>
         <h1 className="font-display text-5xl md:text-6xl text-primary mt-10 text-center">Goblin Siege</h1>
-        <p className="text-muted-foreground mt-3 mb-10">Escolha a fase. Seus heróis lutam sozinhos.</p>
+        <Link to="/gacha" className="group mt-8 w-full max-w-3xl rounded-2xl border-2 border-primary bg-card overflow-hidden flex items-center gap-4 p-4 hover:-translate-y-1 transition">
+          <div className="flex -space-x-6 shrink-0">
+            {GACHA_HEROES.map((h) => <img key={h.id} src={IMG[h.id]} alt={h.name} loading="lazy" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-primary bg-secondary object-cover object-top" />)}
+          </div>
+          <div className="flex-1">
+            <div className="text-xs uppercase tracking-widest text-primary">Novo banner</div>
+            <div className="font-display text-2xl sm:text-3xl">Ladino · Bruxo · Monge</div>
+            <div className="text-sm text-muted-foreground">33% de chance para cada · toque para invocar</div>
+          </div>
+          <span className="font-display text-primary text-xl group-hover:translate-x-1 transition">›</span>
+        </Link>
+        <p className="text-muted-foreground mt-8 mb-6">Escolha a fase. Seus heróis lutam sozinhos.</p>
         <div className="grid gap-4 sm:grid-cols-2 max-w-3xl w-full">
           {STAGES.map((s, i) => (
-            <button key={i} onClick={() => start(i)}
-              className={`text-left rounded-xl border-2 p-6 bg-card hover:border-primary transition hover:-translate-y-1 ${i === 3 ? "border-destructive" : "border-border"}`}>
+            <button key={i} onClick={() => start(i)} disabled={party.length === 0}
+              className={`text-left rounded-xl border-2 p-6 bg-card hover:border-primary transition hover:-translate-y-1 disabled:opacity-50 ${i === 3 ? "border-destructive" : "border-border"}`}>
               <div className="font-display text-2xl">{s.name}</div>
               <div className="text-muted-foreground text-sm mb-3">{s.desc}</div>
               <div className="flex -space-x-4">{s.enemies.map((e, j) => <img key={j} src={IMG[e.id]} alt={e.name} loading="lazy" className="w-14 h-14 rounded-full bg-secondary border-2 border-border object-cover" />)}</div>
             </button>
           ))}
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-3 max-w-3xl w-full">
-          {HEROES.map((h) => (
-            <div key={h.id} className="rounded-xl bg-secondary p-4">
-              <img src={IMG[h.id]} alt={h.name} loading="lazy" className="w-full aspect-square object-contain mb-2" />
-              <div className="font-display text-xl">{h.name}</div>
-              {h.skills.map((s) => (
-                <div key={s.name} className={`text-sm ${s.ultimate ? "text-primary font-semibold" : "text-muted-foreground"}`}>
-                  {s.ultimate ? "⚡ " : "• "}{s.name} {s.cooldown ? `(CD ${s.cooldown})` : ""}
-                </div>
-              ))}
-            </div>
-          ))}
+        <h3 className="font-display text-2xl mt-12 mb-1">Sua equipe ({party.length}/3)</h3>
+        <p className="text-sm text-muted-foreground mb-4">Toque nos heróis para escolher quem luta.</p>
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 max-w-3xl w-full">
+          {ALL_HEROES.filter((h) => available.includes(h.id)).map((h) => {
+            const on = party.includes(h.id);
+            return (
+              <button key={h.id} onClick={() => togglePartyMember(h.id)}
+                className={`text-left rounded-xl border-2 p-4 transition ${on ? "border-primary bg-card" : "border-transparent bg-secondary opacity-70 hover:opacity-100"}`}>
+                <img src={IMG[h.id]} alt={h.name} loading="lazy" className="w-full aspect-square object-contain mb-2" />
+                <div className="font-display text-xl">{on ? "✔ " : ""}{h.name}</div>
+                {h.skills.map((s) => (
+                  <div key={s.name} className={`text-sm ${s.ultimate ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                    {s.ultimate ? "⚡ " : "• "}{s.name} {s.cooldown ? `(CD ${s.cooldown})` : ""}
+                  </div>
+                ))}
+              </button>
+            );
+          })}
         </div>
       </main>
     );
