@@ -291,11 +291,10 @@ function Sprite({ u, index, active, sprites, result }: {
   const dead = u.hp <= 0;
   const boss = u.id === "boss";
   const pct = Math.max(0, (u.hp / u.maxHp) * 100);
-  const mood = result === "win"
-    ? (u.side === "hero" && !dead ? "px-win" : "")
-    : result === "lose"
-      ? (u.side === "enemy" && !dead ? "px-win" : "px-sad")
-      : "";
+  const mood = dead ? ""
+    : result === "win" ? (u.side === "hero" ? "px-win" : "")
+    : result === "lose" ? (u.side === "enemy" ? "px-win" : "px-sad")
+    : "";
   return (
     <div className={`flex flex-col items-center gap-1 ${boss ? "w-24 sm:w-36 md:w-40" : "w-20 sm:w-28 md:w-32"}`}>
       <div
