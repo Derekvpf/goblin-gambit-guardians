@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      owned_heroes: {
+        Row: {
+          hero_id: string
+          obtained_at: string
+          user_id: string
+        }
+        Insert: {
+          hero_id: string
+          obtained_at?: string
+          user_id: string
+        }
+        Update: {
+          hero_id?: string
+          obtained_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
