@@ -297,7 +297,7 @@ function Sprite({ u, index, active, sprites, result }: {
       ? (u.side === "enemy" && !dead ? "px-win" : "px-sad")
       : "";
   return (
-    <div className="flex w-16 flex-col items-center gap-1 sm:w-24 md:w-28">
+    <div className={`flex flex-col items-center gap-1 ${boss ? "w-24 sm:w-36 md:w-40" : "w-20 sm:w-28 md:w-32"}`}>
       <div
         ref={(el) => { sprites.current[u.uid] = el; }}
         className={`flex flex-col items-center ${dead ? "px-dead" : ""} ${mood}`}
@@ -310,7 +310,7 @@ function Sprite({ u, index, active, sprites, result }: {
           width={boss ? 178 : 125}
           height={boss ? 160 : 140}
           style={{ animationDelay: `${index * 0.22}s` }}
-          className={`pixel px-bob h-auto w-auto ${boss ? "max-h-32 sm:max-h-40 md:max-h-48" : "max-h-20 sm:max-h-28 md:max-h-32"}`}
+          className={`pixel px-bob h-auto w-auto max-w-full ${boss ? "max-h-32 sm:max-h-40 md:max-h-48" : "max-h-20 sm:max-h-28 md:max-h-32"}`}
         />
       </div>
       <div className="w-full">
