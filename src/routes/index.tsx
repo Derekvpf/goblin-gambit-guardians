@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { IMG, PIX, HEROES, STAGES, act, spawn, type Unit } from "@/lib/game";
+import { LoginGate } from "@/components/LoginMenu";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -13,7 +14,9 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Game,
+  component: () => (
+    <LoginGate>{(info) => <Game {...info} />}</LoginGate>
+  ),
 });
 
 /* ---------------- animation helpers ---------------- */
@@ -119,7 +122,7 @@ const shakeArena = (el: HTMLElement | null | undefined) =>
   ], 400);
 
 /* ---------------- screens ---------------- */
-function Game() {
+function Game({ nickname, server, logout }: { nickname: string; server: string; logout: () => void }) {
   const [stage, setStage] = useState<number | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [log, setLog] = useState<string[]>([]);
@@ -180,6 +183,10 @@ function Game() {
   if (stage === null) {
     return (
       <main className="min-h-screen bg-background text-foreground p-6 flex flex-col items-center">
+        <div className="w-full max-w-3xl flex justify-between items-center text-sm text-muted-foreground">
+          <span>🧙 {nickname} · 🌐 {server}</span>
+          <button onClick={logout} className="px-3 py-1 rounded-md border bg-card">Sair</button>
+        </div>
         <h1 className="font-display text-5xl md:text-6xl text-primary mt-10 text-center">Goblin Siege</h1>
         <p className="text-muted-foreground mt-3 mb-10">Escolha a fase. Seus heróis lutam sozinhos.</p>
         <div className="grid gap-4 sm:grid-cols-2 max-w-3xl w-full">
