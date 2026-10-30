@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { HEROES, STAGES, act, spawn, type Unit } from "@/lib/game";
+import { IMG, HEROES, STAGES, act, spawn, type Unit } from "@/lib/game";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,14 +63,14 @@ function Game() {
               className={`text-left rounded-xl border-2 p-6 bg-card hover:border-primary transition hover:-translate-y-1 ${i === 3 ? "border-destructive" : "border-border"}`}>
               <div className="font-display text-2xl">{s.name}</div>
               <div className="text-muted-foreground text-sm mb-3">{s.desc}</div>
-              <div className="text-2xl">{s.enemies.map((e) => e.emoji).join(" ")}</div>
+              <div className="flex -space-x-4">{s.enemies.map((e, j) => <img key={j} src={IMG[e.id]} alt={e.name} loading="lazy" className="w-14 h-14 rounded-full bg-secondary border-2 border-border object-cover" />)}</div>
             </button>
           ))}
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-3 max-w-3xl w-full">
           {HEROES.map((h) => (
             <div key={h.id} className="rounded-xl bg-secondary p-4">
-              <div className="text-3xl">{h.emoji}</div>
+              <img src={IMG[h.id]} alt={h.name} loading="lazy" className="w-full aspect-square object-contain mb-2" />
               <div className="font-display text-xl">{h.name}</div>
               {h.skills.map((s) => (
                 <div key={s.name} className={`text-sm ${s.ultimate ? "text-primary font-semibold" : "text-muted-foreground"}`}>
@@ -131,7 +131,7 @@ function UnitCard({ u, active }: { u: Unit; active: boolean }) {
   const pct = (u.hp / u.maxHp) * 100;
   return (
     <div className={`rounded-xl border-2 bg-card p-3 flex gap-3 items-center transition ${active ? "border-primary scale-[1.02]" : "border-border"} ${dead ? "opacity-30 grayscale" : ""}`}>
-      <div className={`text-4xl ${u.id === "boss" ? "text-6xl" : ""}`}>{u.emoji}</div>
+      <img src={IMG[u.id]} alt={u.name} className={`rounded-lg bg-secondary object-cover ${u.id === "boss" ? "w-28 h-28" : "w-20 h-20"} ${active ? "animate-pulse" : ""}`} />
       <div className="flex-1">
         <div className="flex justify-between text-sm font-semibold">
           <span>{u.name}</span>
