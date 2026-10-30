@@ -5,7 +5,18 @@ import lancer from "@/assets/lancer.png";
 import warrior from "@/assets/warrior.png";
 import shaman from "@/assets/shaman.png";
 import boss from "@/assets/boss.png";
+import pxKnight from "@/assets/px-knight.png";
+import pxMage from "@/assets/px-mage.png";
+import pxArcher from "@/assets/px-archer.png";
+import pxLancer from "@/assets/px-lancer.png";
+import pxWarrior from "@/assets/px-warrior.png";
+import pxShaman from "@/assets/px-shaman.png";
+import pxBoss from "@/assets/px-boss.png";
 export const IMG: Record<string, string> = { knight, mage, archer, lancer, warrior, shaman, boss };
+export const PIX: Record<string, string> = {
+  knight: pxKnight, mage: pxMage, archer: pxArcher,
+  lancer: pxLancer, warrior: pxWarrior, shaman: pxShaman, boss: pxBoss,
+};
 export type Side = "hero" | "enemy";
 export type Skill = {
   name: string;
@@ -20,7 +31,7 @@ export type Unit = UnitDef & { uid: string; side: Side; maxHp: number; shield: n
 export const HEROES: UnitDef[] = [
   { id: "knight", name: "Cavaleiro", emoji: "🛡️", hp: 260, atk: 22, def: 12, spd: 8, skills: [
     { name: "Golpe de Espada", cooldown: 0, kind: "damage", power: 1 },
-    { name: "Muralha de Escudo", cooldown: 3, kind: "shield", power: 40 },
+    { name: "Muralha de Escudo", cooldown: 3, kind: "shield", power: 55 },
     { name: "Juízo Sagrado", cooldown: 6, kind: "aoe", power: 1.8, ultimate: true },
   ]},
   { id: "mage", name: "Mago", emoji: "🧙", hp: 150, atk: 30, def: 4, spd: 10, skills: [
@@ -51,10 +62,10 @@ const G = {
     { name: "Cura Tribal", cooldown: 3, kind: "heal", power: 30 },
     { name: "Explosão Tóxica", cooldown: 5, kind: "aoe", power: 1.2, ultimate: true },
   ]},
-  boss: { id: "boss", name: "HOBGOBLIN", emoji: "👹", hp: 900, atk: 30, def: 10, spd: 9, skills: [
+  boss: { id: "boss", name: "HOBGOBLIN", emoji: "👹", hp: 900, atk: 28, def: 6, spd: 9, skills: [
     { name: "Clava Esmagadora", cooldown: 0, kind: "damage", power: 1.3 },
-    { name: "Rugido de Guerra", cooldown: 3, kind: "shield", power: 80 },
-    { name: "Terremoto", cooldown: 4, kind: "aoe", power: 1.6, ultimate: true },
+    { name: "Rugido de Guerra", cooldown: 3, kind: "shield", power: 25 },
+    { name: "Terremoto", cooldown: 4, kind: "aoe", power: 1.4, ultimate: true },
   ]},
 } satisfies Record<string, UnitDef>;
 
@@ -71,10 +82,13 @@ export const spawn = (d: UnitDef, side: Side, mult = 1): Unit => ({
   uid: `${d.id}-${n++}`, side, shield: 0, cds: d.skills.map(() => 0),
 });
 
-export function act(actor: Unit, all: Unit[]): string {
+export type ActResult = { msg: string; skill: Skill; targets: Unit[] };
+
+export function act(actor: Unit, all: Unit[]): ActResult {
   const allies = all.filter((u) => u.side === actor.side && u.hp > 0);
   const foes = all.filter((u) => u.side !== actor.side && u.hp > 0);
-  if (!foes.length) return "";
+  const none: ActResult = { msg: "", skill: actor.skills[0]!, targets: [] };
+  if (!foes.length) return none;
   actor.cds = actor.cds.map((c) => Math.max(0, c - 1));
   const hurt = allies.filter((a) => a.hp < a.maxHp * 0.6);
   let idx = 0;
@@ -95,20 +109,24 @@ export function act(actor: Unit, all: Unit[]): string {
   switch (s.kind) {
     case "damage": {
       const t = foes.reduce((a, b) => (a.hp < b.hp ? a : b));
-      return `${actor.name} usa ${tag}${s.name} em ${t.name}: ${hit(t, s.power)} de dano`;
+      const d = hit(t, s.power);
+      return { msg: `${actor.name} usa ${tag}${s.name} em ${t.name}: ${d} de dano`, skill: s, targets: [t] };
     }
     case "aoe": {
-      const total = foes.reduce((sum, t) => sum + hit(t, s.power), 0);
-      return `${actor.name} usa ${tag}${s.name} em todos: ${total} de dano total`;
+      const list = [...foes];
+      const total = list.reduce((sum, t) => sum + hit(t, s.power), 0);
+      return { msg: `${actor.name} usa ${tag}${s.name} em todos: ${total} de dano total`, skill: s, targets: list };
     }
     case "heal": {
       const t = hurt.reduce((a, b) => (a.hp / a.maxHp < b.hp / b.maxHp ? a : b));
       t.hp = Math.min(t.maxHp, t.hp + s.power);
-      return `${actor.name} usa ${tag}${s.name} e cura ${t.name} em ${s.power}`;
+      return { msg: `${actor.name} usa ${tag}${s.name} e cura ${t.name} em ${s.power}`, skill: s, targets: [t] };
     }
     case "shield": {
-      allies.forEach((a) => (a.shield += s.power));
-      return `${actor.name} usa ${tag}${s.name}: aliados ganham ${s.power} de escudo`;
+      const list = [...allies];
+      list.forEach((a) => (a.shield += s.power));
+      return { msg: `${actor.name} usa ${tag}${s.name}: aliados ganham ${s.power} de escudo`, skill: s, targets: list };
     }
   }
+  return none;
 }
