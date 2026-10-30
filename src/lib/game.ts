@@ -82,10 +82,13 @@ export const spawn = (d: UnitDef, side: Side, mult = 1): Unit => ({
   uid: `${d.id}-${n++}`, side, shield: 0, cds: d.skills.map(() => 0),
 });
 
-export function act(actor: Unit, all: Unit[]): string {
+export type ActResult = { msg: string; skill: Skill; targets: Unit[] };
+
+export function act(actor: Unit, all: Unit[]): ActResult {
   const allies = all.filter((u) => u.side === actor.side && u.hp > 0);
   const foes = all.filter((u) => u.side !== actor.side && u.hp > 0);
-  if (!foes.length) return "";
+  const none: ActResult = { msg: "", skill: actor.skills[0]!, targets: [] };
+  if (!foes.length) return none;
   actor.cds = actor.cds.map((c) => Math.max(0, c - 1));
   const hurt = allies.filter((a) => a.hp < a.maxHp * 0.6);
   let idx = 0;
@@ -106,20 +109,24 @@ export function act(actor: Unit, all: Unit[]): string {
   switch (s.kind) {
     case "damage": {
       const t = foes.reduce((a, b) => (a.hp < b.hp ? a : b));
-      return `${actor.name} usa ${tag}${s.name} em ${t.name}: ${hit(t, s.power)} de dano`;
+      const d = hit(t, s.power);
+      return { msg: `${actor.name} usa ${tag}${s.name} em ${t.name}: ${d} de dano`, skill: s, targets: [t] };
     }
     case "aoe": {
-      const total = foes.reduce((sum, t) => sum + hit(t, s.power), 0);
-      return `${actor.name} usa ${tag}${s.name} em todos: ${total} de dano total`;
+      const list = [...foes];
+      const total = list.reduce((sum, t) => sum + hit(t, s.power), 0);
+      return { msg: `${actor.name} usa ${tag}${s.name} em todos: ${total} de dano total`, skill: s, targets: list };
     }
     case "heal": {
       const t = hurt.reduce((a, b) => (a.hp / a.maxHp < b.hp / b.maxHp ? a : b));
       t.hp = Math.min(t.maxHp, t.hp + s.power);
-      return `${actor.name} usa ${tag}${s.name} e cura ${t.name} em ${s.power}`;
+      return { msg: `${actor.name} usa ${tag}${s.name} e cura ${t.name} em ${s.power}`, skill: s, targets: [t] };
     }
     case "shield": {
-      allies.forEach((a) => (a.shield += s.power));
-      return `${actor.name} usa ${tag}${s.name}: aliados ganham ${s.power} de escudo`;
+      const list = [...allies];
+      list.forEach((a) => (a.shield += s.power));
+      return { msg: `${actor.name} usa ${tag}${s.name}: aliados ganham ${s.power} de escudo`, skill: s, targets: list };
     }
   }
+  return none;
 }
