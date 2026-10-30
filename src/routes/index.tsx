@@ -29,7 +29,7 @@ function run(el: HTMLElement | null | undefined, kf: KF, duration: number, itera
 }
 
 /** Floating combat text over a sprite (-24, +45, 🛡40). */
-function popup(host: HTMLElement | null, target: HTMLElement | null, text: string, color: string) {
+function popup(host: HTMLElement | null | undefined, target: HTMLElement | null | undefined, text: string, color: string) {
   if (!host || !target || reduced()) return;
   const h = host.getBoundingClientRect();
   const r = target.getBoundingClientRect();
@@ -52,7 +52,7 @@ function popup(host: HTMLElement | null, target: HTMLElement | null, text: strin
 }
 
 /** What the acting hero/enemy does: lunge, supreme slam, brace or heal-cast. */
-function playActor(el: HTMLDivElement | null, dir: number, kind: string, ult: boolean, gold: string, green: string) {
+function playActor(el: HTMLElement | null | undefined, dir: number, kind: string, ult: boolean, gold: string, green: string) {
   if (!el) return;
   if (ult) {
     run(el, [
@@ -86,7 +86,7 @@ function playActor(el: HTMLDivElement | null, dir: number, kind: string, ult: bo
   }
 }
 
-const playHurt = (el: HTMLDivElement | null) =>
+const playHurt = (el: HTMLElement | null | undefined) =>
   run(el, [
     { transform: "translateX(0)", filter: "brightness(2.8) saturate(.2)" },
     { transform: "translateX(-8px)", filter: "brightness(1.9) saturate(.6)" },
@@ -95,21 +95,21 @@ const playHurt = (el: HTMLDivElement | null) =>
     { transform: "translateX(0)", filter: "brightness(1) saturate(1)" },
   ], 360);
 
-const playGuard = (el: HTMLDivElement | null, gold: string) =>
+const playGuard = (el: HTMLElement | null | undefined, gold: string) =>
   run(el, [
     { transform: "translateY(0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
     { transform: "translateY(-6px) scale(1.06)", filter: `brightness(1.45) drop-shadow(0 0 14px ${gold})`, offset: 0.4 },
     { transform: "translateY(0) scale(1)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
   ], 620);
 
-const playHealed = (el: HTMLDivElement | null, green: string) =>
+const playHealed = (el: HTMLElement | null | undefined, green: string) =>
   run(el, [
     { transform: "translateY(0)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
     { transform: "translateY(-12px)", filter: `brightness(1.7) drop-shadow(0 0 16px ${green})`, offset: 0.45 },
     { transform: "translateY(0)", filter: "brightness(1) drop-shadow(0 0 0px transparent)" },
   ], 640);
 
-const shakeArena = (el: HTMLElement | null) =>
+const shakeArena = (el: HTMLElement | null | undefined) =>
   run(el, [
     { transform: "translate(0,0)" },
     { transform: "translate(-7px,4px)" },
