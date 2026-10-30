@@ -71,12 +71,12 @@ export function act(actor: Unit, all: Unit[]): string {
   const hurt = allies.filter((a) => a.hp < a.maxHp * 0.6);
   let idx = 0;
   for (let i = 2; i >= 1; i--) {
-    const s = actor.skills[i];
-    if (actor.cds[i] > 0) continue;
+    const s = actor.skills[i]!;
+    if (actor.cds[i]! > 0) continue;
     if (s.kind === "heal" && !hurt.length) continue;
     idx = i; break;
   }
-  const s = actor.skills[idx];
+  const s = actor.skills[idx]!;
   actor.cds[idx] = s.cooldown;
   const hit = (t: Unit, p: number) => {
     let dmg = Math.max(1, Math.round(actor.atk * p * (0.9 + Math.random() * 0.2) - t.def));

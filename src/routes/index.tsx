@@ -28,18 +28,18 @@ function Game() {
 
   const start = (i: number) => {
     const mult = 1 + i * 0.15;
-    const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i].enemies.map((e) => spawn(e, "enemy", mult))];
+    const u = [...HEROES.map((h) => spawn(h, "hero")), ...STAGES[i]!.enemies.map((e) => spawn(e, "enemy", mult))];
     order.current = [...u].sort((a, b) => b.spd - a.spd);
     pos.current = 0;
-    setUnits(u); setLog([`⚔️ ${STAGES[i].name} começou!`]); setResult(null); setStage(i);
+    setUnits(u); setLog([`⚔️ ${STAGES[i]!.name} começou!`]); setResult(null); setStage(i);
   };
 
   useEffect(() => {
     if (stage === null || result) return;
     const t = setTimeout(() => {
       const alive = order.current.filter((u) => u.hp > 0);
-      let actor = order.current[pos.current % order.current.length];
-      while (actor.hp <= 0) { pos.current++; actor = order.current[pos.current % order.current.length]; }
+      let actor = order.current[pos.current % order.current.length]!;
+      while (actor.hp <= 0) { pos.current++; actor = order.current[pos.current % order.current.length]!; }
       pos.current++;
       setActive(actor.uid);
       const msg = act(actor, alive);
@@ -88,7 +88,7 @@ function Game() {
   return (
     <main className="min-h-screen bg-background text-foreground p-4 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3 max-w-6xl mx-auto mb-6">
-        <h2 className="font-display text-3xl text-primary">{STAGES[stage].name}</h2>
+        <h2 className="font-display text-3xl text-primary">{STAGES[stage]!.name}</h2>
         <div className="flex gap-2">
           {[["1x", 900], ["2x", 450], ["4x", 180]].map(([l, v]) => (
             <button key={l} onClick={() => setSpeed(v as number)}
@@ -143,8 +143,8 @@ function UnitCard({ u, active }: { u: Unit; active: boolean }) {
         <div className="flex gap-1 mt-2">
           {u.skills.map((s, i) => (
             <span key={s.name} title={s.name}
-              className={`text-[10px] px-1.5 py-0.5 rounded ${u.cds[i] > 0 ? "bg-muted text-muted-foreground" : s.ultimate ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-              {s.ultimate ? "⚡" : ""}{s.name}{u.cds[i] > 0 ? ` ${u.cds[i]}` : ""}
+              className={`text-[10px] px-1.5 py-0.5 rounded ${u.cds[i]! > 0 ? "bg-muted text-muted-foreground" : s.ultimate ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
+              {s.ultimate ? "⚡" : ""}{s.name}{u.cds[i]! > 0 ? ` ${u.cds[i]}` : ""}
             </span>
           ))}
         </div>
