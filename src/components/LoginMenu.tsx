@@ -37,13 +37,14 @@ export function LoginGate({ children }: { children: (info: { nickname: string; s
       .then(({ data }) => setNickname(data?.nickname ?? "Aventureiro"));
   }, [session, ready]);
 
+  useEffect(() => {
+    if (!ready) return;
+    if (entered) sessionStorage.setItem("gs-entered", "1"); else sessionStorage.removeItem("gs-entered");
+  }, [entered, ready]);
+
   const logout = async () => { await supabase.auth.signOut(); setEntered(false); };
 
   if (!ready) return <main className="min-h-screen bg-background" />;
-  useEffect(() => {
-    if (entered) sessionStorage.setItem("gs-entered", "1"); else sessionStorage.removeItem("gs-entered");
-  }, [entered]);
-
   if (session && entered) {
     return <>{children({ nickname, server: SERVERS.find((s) => s.id === server)!.name, logout })}</>;
   }
