@@ -12,10 +12,17 @@ import pxLancer from "@/assets/px-lancer.png";
 import pxWarrior from "@/assets/px-warrior.png";
 import pxShaman from "@/assets/px-shaman.png";
 import pxBoss from "@/assets/px-boss.png";
-export const IMG: Record<string, string> = { knight, mage, archer, lancer, warrior, shaman, boss };
+import rogue from "@/assets/rogue.png";
+import warlock from "@/assets/warlock.png";
+import monk from "@/assets/monk.png";
+import pxRogue from "@/assets/px-rogue.png";
+import pxWarlock from "@/assets/px-warlock.png";
+import pxMonk from "@/assets/px-monk.png";
+export const IMG: Record<string, string> = { knight, mage, archer, lancer, warrior, shaman, boss, rogue, warlock, monk };
 export const PIX: Record<string, string> = {
   knight: pxKnight, mage: pxMage, archer: pxArcher,
   lancer: pxLancer, warrior: pxWarrior, shaman: pxShaman, boss: pxBoss,
+  rogue: pxRogue, warlock: pxWarlock, monk: pxMonk,
 };
 export type Side = "hero" | "enemy";
 export type Skill = {
@@ -45,6 +52,26 @@ export const HEROES: UnitDef[] = [
     { name: "Tiro Mortal", cooldown: 5, kind: "damage", power: 3.5, ultimate: true },
   ]},
 ];
+
+/** Heroes obtainable only through the gacha banner (equal chance each). */
+export const GACHA_HEROES: UnitDef[] = [
+  { id: "rogue", name: "Ladino", emoji: "🗡️", hp: 160, atk: 29, def: 5, spd: 16, skills: [
+    { name: "Punhalada", cooldown: 0, kind: "damage", power: 1.1 },
+    { name: "Leque de Lâminas", cooldown: 3, kind: "aoe", power: 0.9 },
+    { name: "Assassinato", cooldown: 5, kind: "damage", power: 3.8, ultimate: true },
+  ]},
+  { id: "warlock", name: "Bruxo", emoji: "💀", hp: 155, atk: 31, def: 4, spd: 9, skills: [
+    { name: "Raio Sombrio", cooldown: 0, kind: "damage", power: 1 },
+    { name: "Pacto de Sangue", cooldown: 3, kind: "heal", power: 40 },
+    { name: "Praga", cooldown: 6, kind: "aoe", power: 2.3, ultimate: true },
+  ]},
+  { id: "monk", name: "Monge", emoji: "👊", hp: 220, atk: 24, def: 9, spd: 12, skills: [
+    { name: "Soco Rápido", cooldown: 0, kind: "damage", power: 1.05 },
+    { name: "Postura Zen", cooldown: 3, kind: "shield", power: 40 },
+    { name: "Mil Punhos", cooldown: 5, kind: "aoe", power: 1.9, ultimate: true },
+  ]},
+];
+export const ALL_HEROES = [...HEROES, ...GACHA_HEROES];
 
 const G = {
   lancer: { id: "lancer", name: "Goblin Lanceiro", emoji: "🔱", hp: 80, atk: 16, def: 4, spd: 11, skills: [
